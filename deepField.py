@@ -6,7 +6,7 @@ import numpy as np
 import os, math
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
-import matplotlib.pyplot as plt
+from tensorboardX import SummaryWriter
 
 
 class Antennas(Dataset):
@@ -164,6 +164,7 @@ def training(antennas, fitness):
     #model = DeepField().to(device)
     model = DeepResField(Block, [1, 1]).to(device)
     print(model)
+    #writer.add_graph(model, )
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.00005, weight_decay=0.5)
     # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1)
@@ -187,6 +188,7 @@ def training(antennas, fitness):
             optimizer.step()
 
         print('Training epoch {}, loss {}'.format(epoch, loss_train/count))
+        writer.add_scalar('Train/Loss', loss_train, epoch)
 
         # EVALUATION
         loss_eval = 0.0; count = 0
@@ -202,10 +204,13 @@ def training(antennas, fitness):
             count += len(antennas)
 
         print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
+        writer.add_scalar('Val/Loss', loss_eval, epoch)
+    writer.close()
 
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    writer = SummaryWriter()
 
     antennas, fitness = read_dataset()
 
