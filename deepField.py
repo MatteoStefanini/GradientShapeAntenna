@@ -137,7 +137,7 @@ class DeepResField(nn.Module):
         return nn.Sequential(*layers)
 
 
-def read_dataset(folder=None):
+def read_dataset_onefitness(folder=None):
     dt = np.dtype([('combination', 'uint8', (504,))])
     records = np.fromfile('dataset_pop_260618_1642.dat', dt)
     data = np.concatenate(records.tolist(), axis=0)
@@ -150,7 +150,26 @@ def read_dataset(folder=None):
     fit = np.fromfile('dataset_fitness_260618_1642.dat', dt)
     fitness = np.concatenate(fit.tolist(), axis=0)
     print(fitness.shape)
+
     return antennas, fitness
+
+
+def read_dataset(folder=None):
+    dt = np.dtype([('combination', 'uint8', (504,))])
+    records = np.fromfile('dataset_pop_260618_1642.dat', dt)
+    data = np.concatenate(records.tolist(), axis=0)
+    print(data.shape)
+    antennas = np.insert(data, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1, 1, 1, 1, 1, 1], axis=1) \
+        .reshape((data.shape[0], 32, 16))
+    print(antennas.shape)
+
+    dt = np.dtype([('field', 'float32', (40,))])
+    field_records = np.fromfile('dataset_FF_060718_1928.dat', dt)
+    print(field_records.shape)
+    field = np.concatenate(field_records.tolist(), axis=0)
+    print(field.shape)
+
+    return antennas, field
 
 
 def training(antennas, fitness):
@@ -188,7 +207,7 @@ def training(antennas, fitness):
             optimizer.step()
 
         print('Training epoch {}, loss {}'.format(epoch, loss_train/count))
-        writer.add_scalar('Train/Loss', loss_train, epoch)
+        writer.add_scalar('Train/Loss', loss_train/count, epoch)
 
         # EVALUATION
         loss_eval = 0.0; count = 0
@@ -204,7 +223,7 @@ def training(antennas, fitness):
             count += len(antennas)
 
         print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
-        writer.add_scalar('Val/Loss', loss_eval, epoch)
+        writer.add_scalar('Val/Loss', loss_eval/count, epoch)
     writer.close()
 
 
@@ -212,6 +231,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     writer = SummaryWriter()
 
+    #antennas, fitness = read_dataset_onefitness()
     antennas, fitness = read_dataset()
 
     training(antennas, fitness)
