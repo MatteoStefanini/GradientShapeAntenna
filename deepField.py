@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.nn import functional as F
 import numpy as np
-import os, math
+import os, math, test
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from tensorboardX import SummaryWriter
@@ -178,19 +178,19 @@ def plot_field(field):
 
     Phi = np.radians(np.linspace(-90, 90, 19))
     Theta = np.radians(np.linspace(1, 90, 9))
-    THETA, PHI = np.meshgrid(Theta, Phi)
+    THETA, PHI = np.meshgrid(Phi, Theta)
 
-    R = field.reshape((len(Phi), len(Theta)))
+    R = field.reshape((len(Theta), len(Phi)))
 
     X = R * np.sin(PHI) * np.cos(THETA)
     Y = R * np.sin(PHI) * np.sin(THETA)
     Z = R * np.cos(PHI)
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection='3d')
-    plot = ax.plot_surface(
-        X, Y, Z, rstride=1, cstride=1, cmap=plt.get_cmap('coolwarm'),  # or jet
+    plot = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=plt.get_cmap('coolwarm'),  # or jet
         linewidth=0.1, antialiased=False, alpha=0.5)
 
+    #plt.savefig('field.png', bbox_inches="tight", dpi=300)
     plt.show()
 
 
@@ -256,6 +256,7 @@ if __name__ == '__main__':
     # antennas, fitness = read_dataset_onefitness()
     antennas, fields = read_dataset()
 
-    plot_field(fields[0])
+    #plot_field(fields[0])
+    #test.draw_antenna(antennas[1].reshape((32, 16)), 'first_antenna.jpg')
 
     training(antennas, fields)

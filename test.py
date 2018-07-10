@@ -4,13 +4,14 @@ import torch
 import cv2
 
 
-def draw_antenna(mat):
+def draw_antenna(mat, name):
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
             if mat[i][j] == 1:
                 mat[i][j] = 255
 
-    cv2.imwrite('antenna.png', mat)
+    dst = cv2.resize(mat, None, fx=4, fy=4, interpolation=cv2.INTER_AREA)
+    cv2.imwrite(name, dst)
     cv2.waitKey(0)
 
 
