@@ -156,15 +156,15 @@ def read_dataset_onefitness(folder=None):
 
 def read_dataset(folder=None):
     dt = np.dtype([('combination', 'uint8', (504,))])
-    records = np.fromfile('dataset_pop_260618_1642.dat', dt)
+    records = np.fromfile('dataset_pop_090718_1705.dat', dt)
     data = np.concatenate(records.tolist(), axis=0)
     print(data.shape)
     antennas = np.insert(data, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1, 1, 1, 1, 1, 1], axis=1) \
         .reshape((data.shape[0], 32, 16))
     print(antennas.shape)
 
-    dt = np.dtype([('field', 'float32', (40,))])
-    field_records = np.fromfile('dataset_FF_060718_1928.dat', dt)
+    dt = np.dtype([('field', 'float32', (171,))])
+    field_records = np.fromfile('dataset_FF_090718_1705.dat', dt)
     print(field_records.shape)
     field = np.concatenate(field_records.tolist(), axis=0)
     print(field.shape)
@@ -172,7 +172,30 @@ def read_dataset(folder=None):
     return antennas, field
 
 
+def plot_field(field):
+    import matplotlib.pyplot as plt
+    import mpl_toolkits.mplot3d.axes3d as axes3d
+
+    Phi = np.radians(np.linspace(-90, 90, 19))
+    Theta = np.radians(np.linspace(1, 90, 9))
+    THETA, PHI = np.meshgrid(Theta, Phi)
+
+    R = field.reshape((len(Phi), len(Theta)))
+
+    X = R * np.sin(PHI) * np.cos(THETA)
+    Y = R * np.sin(PHI) * np.sin(THETA)
+    Z = R * np.cos(PHI)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    plot = ax.plot_surface(
+        X, Y, Z, rstride=1, cstride=1, cmap=plt.get_cmap('coolwarm'),  # or jet
+        linewidth=0.1, antialiased=False, alpha=0.5)
+
+    plt.show()
+
+
 def training(antennas, fitness):
+    writer = SummaryWriter()
 
     data_train, data_val, fit_train, fit_val = train_test_split(antennas, fitness, test_size=0.20, random_state=7)
     dataset_train = Antennas(data_train, fit_train)
@@ -229,9 +252,10 @@ def training(antennas, fitness):
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    writer = SummaryWriter()
 
-    #antennas, fitness = read_dataset_onefitness()
-    antennas, fitness = read_dataset()
+    # antennas, fitness = read_dataset_onefitness()
+    antennas, fields = read_dataset()
 
-    training(antennas, fitness)
+    plot_field(fields[0])
+
+    training(antennas, fields)
