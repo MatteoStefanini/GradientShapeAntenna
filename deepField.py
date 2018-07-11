@@ -237,7 +237,6 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     antennas, fields = read_dataset()
-    tr = 0
 
     #plot_field(fields[0])
     #test.draw_antenna(antennas[1].reshape((32, 16)), 'first_antenna.jpg')
