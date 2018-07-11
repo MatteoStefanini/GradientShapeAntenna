@@ -244,6 +244,6 @@ if __name__ == '__main__':
     antennas, fields = read_dataset()
 
     #plot_field(fields[0])
-    test.draw_antenna(antennas[0], 'first_antenna_correct2.jpg')
+    test.draw_antenna(antennas[0], 'first_antenna_correct3.jpg')
 
     training(antennas, fields)
