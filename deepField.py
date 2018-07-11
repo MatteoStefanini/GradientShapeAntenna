@@ -140,8 +140,13 @@ class DeepResField(nn.Module):
 def read_dataset(folder=None):
     dt = np.dtype([('combination', 'uint8', (504,))])
     records = np.fromfile('dataset_pop_090718_1705.dat', dt)
-    data = np.concatenate(records.tolist(), axis=0)
-    print(data.shape)
+    data_raw = np.concatenate(records.tolist(), axis=0)
+    print(data_raw.shape)
+
+    mapping = np.genfromtxt('mapping.csv', delimiter=',', dtype=np.int16)
+    mapping = np.subtract(mapping, 1)  # matlab index is devil
+    data = data_raw[:, mapping]
+
     antennas = np.insert(data, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1, 1, 1, 1, 1, 1], axis=1) \
         .reshape((data.shape[0], 32, 16))
     print(antennas.shape)
@@ -239,6 +244,6 @@ if __name__ == '__main__':
     antennas, fields = read_dataset()
 
     #plot_field(fields[0])
-    #test.draw_antenna(antennas[1].reshape((32, 16)), 'first_antenna.jpg')
+    test.draw_antenna(antennas[1].reshape((32, 16)), 'first_antenna_correct.jpg')
 
     training(antennas, fields)
