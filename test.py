@@ -22,6 +22,23 @@ def fill_antenna_center():
     draw_antenna(antenna)
 
 
+def read_dataset_onefitness(folder=None):
+    dt = np.dtype([('combination', 'uint8', (504,))])
+    records = np.fromfile('dataset_pop_260618_1642.dat', dt)
+    data = np.concatenate(records.tolist(), axis=0)
+    print(data.shape)
+    antennas = np.insert(data, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1, 1, 1, 1, 1, 1], axis=1) \
+        .reshape((data.shape[0], 32, 16))
+    print(antennas.shape)
+
+    dt = np.dtype([('fitness', 'float32', (1,))])
+    fit = np.fromfile('dataset_fitness_260618_1642.dat', dt)
+    fitness = np.concatenate(fit.tolist(), axis=0)
+    print(fitness.shape)
+
+    return antennas, fitness
+
+
 def read_antenna_dataset():
     dt = np.dtype([('combination', 'uint8', (504,))])
     records = np.fromfile('dataset_pop_260618_1642.dat', dt)
@@ -55,6 +72,8 @@ if __name__ == '__main__':
     print(df2.shape)
     '''
     # fill_antenna_center()
+
+    # antennas, fitness = read_dataset_onefitness()
 
     # antennas = read_antenna_dataset()
     field = read_field_dataset()
