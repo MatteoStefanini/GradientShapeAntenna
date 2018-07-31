@@ -235,6 +235,7 @@ def training(antennas, fitness):
 
         print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
         writer.add_scalar('Val/Loss', loss_eval/count, epoch)
+
     writer.close()
 
 
