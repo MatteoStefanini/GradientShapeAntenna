@@ -8,9 +8,11 @@ def draw_antenna(mat, name):
     for i in range(mat.shape[0]):
         for j in range(mat.shape[1]):
             if mat[i][j] == 1:
+                mat[i][j] = 0
+            else:
                 mat[i][j] = 255
 
-    dst = cv2.resize(mat, None, fx=4, fy=4, interpolation=cv2.INTER_AREA)
+    dst = cv2.resize(mat, None, fx=8, fy=8, interpolation=cv2.INTER_AREA)
     cv2.imwrite(name, dst)
     cv2.waitKey(0)
 
