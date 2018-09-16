@@ -10,12 +10,12 @@ from tensorboardX import SummaryWriter
 
 
 class Antennas(Dataset):
-    def __init__(self, data, fitness):
+    def __init__(self, data, field):
         self.data = data
-        self.fitness = fitness
+        self.field = field
 
     def __getitem__(self, item):
-        return torch.from_numpy(self.data[item]).requires_grad_(), torch.from_numpy(self.fitness[item])
+        return torch.from_numpy(self.data[item]).requires_grad_(), torch.from_numpy(self.field[item])
 
     def __len__(self):
         return len(self.data)
@@ -162,10 +162,10 @@ def read_dataset(folder=None):
     return antennas, field
 
 
-def training(antennas, fitness):
+def training(antennas, field):
     writer = SummaryWriter()
 
-    data_train, data_val, fit_train, fit_val = train_test_split(antennas, fitness, test_size=0.20, random_state=7)
+    data_train, data_val, fit_train, fit_val = train_test_split(antennas, field, test_size=0.20, random_state=7)
     dataset_train = Antennas(data_train, fit_train)
     dataloader_train = DataLoader(dataset_train, batch_size=32, num_workers=0)
     dataset_val = Antennas(data_val, fit_val)
@@ -183,12 +183,12 @@ def training(antennas, fitness):
         loss_train = 0.0; count = 0
         model.train()
         dataloader_iter = iter(dataloader_train)
-        for it, (antennas, fitness) in enumerate(dataloader_iter):
+        for it, (antennas, field) in enumerate(dataloader_iter):
             antennas = antennas.float().to(device)
-            fitness = fitness.to(device)
+            field = field.to(device)
 
             output = model(antennas)
-            loss = criterion(output, fitness)
+            loss = criterion(output, field)
             loss_train += loss.item()
             count += len(antennas)
 
@@ -203,12 +203,12 @@ def training(antennas, fitness):
         loss_eval = 0.0; count = 0
         model.eval()
         dataloader_val_iter = iter(dataloader_val)
-        for it, (antennas, fitness) in enumerate(dataloader_val_iter):
+        for it, (antennas, field) in enumerate(dataloader_val_iter):
             antennas = antennas.float().to(device)
-            fitness = fitness.to(device)
+            field = field.to(device)
 
             output = model(antennas)
-            loss = criterion(output, fitness)
+            loss = criterion(output, field)
             loss_eval += loss.item()
             count += len(antennas)
 
@@ -226,5 +226,6 @@ if __name__ == '__main__':
 
     #test.plot_field(fields[0])
     #test.draw_antenna(antennas[0], 'first_antenna_correct7.jpg')
+    #test.randomness(fields)
 
     training(antennas, fields)

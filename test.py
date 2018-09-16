@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import cv2
+import torch.nn as nn
 
 
 def draw_antenna(mat, name):
@@ -37,6 +38,35 @@ def plot_field(field):
 
     #plt.savefig('field.png', bbox_inches="tight", dpi=300)
     plt.show()
+
+
+def get_random():
+    #mean = 1.02763
+    #std = 1.8805
+    #return np.random.normal(mean, std, 153)
+
+    import scipy.stats
+    lower = 0
+    upper = 20  # 30
+    mu = 1.02763
+    sigma = 1.8805
+    N = 153
+
+    samples = scipy.stats.truncnorm.rvs(
+        (lower - mu) / sigma, (upper - mu) / sigma, loc=mu, scale=sigma, size=N)
+    return torch.from_numpy(samples)
+
+
+def randomness(field):
+
+    criterion = nn.MSELoss()
+    loss_train = 0.0; count = 0
+    for i in range(10000):
+        output = get_random()
+        loss = criterion(output, torch.from_numpy(field[i]).double())
+        loss_train += loss.item()
+
+    print('Random loss {}'.format(loss_train / 10000))
 
 
 def fill_antenna_center():
