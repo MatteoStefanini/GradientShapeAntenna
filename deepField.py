@@ -93,10 +93,10 @@ class DeepResField(nn.Module):
         self.relu = nn.ReLU(inplace=False)
         self.layer1 = self._make_layer(block, 16, layers[0])
         self.layer2 = self._make_layer(block, 32, layers[1])
-        self.layer3 = self._make_layer(block, 64, layers[2], stride=2)
+        self.layer3 = self._make_layer(block, 48, layers[2], stride=2)
 
         #self.avg = nn.AvgPool2d(3, stride=2)
-        self.fc = nn.Linear(2048, 153)
+        self.fc = nn.Linear(1536, 153)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -172,14 +172,16 @@ def training(antennas, field):
     dataloader_val = DataLoader(dataset_val, batch_size=32, num_workers=0)
 
     #model = DeepField().to(device)
-    model = DeepResField(Block, [1, 1, 1]).to(device)
+    model = DeepResField(Block, [2, 3, 1]).to(device)
     print(model)
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.00001, weight_decay=0.2)
+    optimizer = optim.Adam(model.parameters(), lr=0.000015, weight_decay=0.3)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5)
+    schedulerStep = optim.lr_scheduler.StepLR(optimizer, step_size=18, gamma=0.5)
 
     for epoch in range(50):
-        print("Epoch: %d" % (epoch+1))
+        schedulerStep.step()
+        print("Epoch: %d" % epoch)
         loss_train = 0.0; count = 0
         model.train()
         dataloader_iter = iter(dataloader_train)
@@ -191,6 +193,9 @@ def training(antennas, field):
             loss = criterion(output, field)
             loss_train += loss.item()
             count += len(antennas)
+
+            if epoch == 0 and count < 150:
+                print('first_loss_train: ', loss.item())
 
             optimizer.zero_grad()
             loss.backward()
