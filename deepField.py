@@ -29,12 +29,12 @@ class DeepField(nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1)
         self.bn2 = nn.BatchNorm2d(32)
-        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=2)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
         self.bn3 = nn.BatchNorm2d(64)
-        self.conv4 = nn.Conv2d(64, 32, kernel_size=1, stride=1)
-        self.bn4 = nn.BatchNorm2d(32)
+        self.conv4 = nn.Conv2d(64, 64, kernel_size=1, stride=2)
+        self.bn4 = nn.BatchNorm2d(64)
         self.avg = nn.AvgPool2d(5, stride=2)
-        self.fc = nn.Linear(160, 1)
+        self.fc = nn.Linear(320, 153)
 
     def forward(self, x):
 
@@ -58,7 +58,7 @@ class Block(nn.Module):
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=False)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False, groups=16)
         self.bn2 = nn.BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
@@ -92,10 +92,11 @@ class DeepResField(nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.relu = nn.ReLU(inplace=False)
         self.layer1 = self._make_layer(block, 16, layers[0])
-        self.layer2 = self._make_layer(block, 32, layers[1], stride=2)
+        self.layer2 = self._make_layer(block, 32, layers[1])
+        self.layer3 = self._make_layer(block, 64, layers[2], stride=2)
 
-        self.avg = nn.AvgPool2d(3, stride=2)
-        self.fc = nn.Linear(96, 1)
+        #self.avg = nn.AvgPool2d(3, stride=2)
+        self.fc = nn.Linear(2048, 153)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -112,8 +113,9 @@ class DeepResField(nn.Module):
 
         x = self.layer1(x)
         x = self.layer2(x)
+        x = self.layer3(x)
 
-        x = self.avg(x)
+        #x = self.avg(x)
         x = self.fc(x.view(x.size(0), -1))
 
         return x
@@ -139,11 +141,11 @@ class DeepResField(nn.Module):
 
 def read_dataset(folder=None):
     dt = np.dtype([('combination', 'uint8', (504,))])
-    records = np.fromfile('dataset_pop_090718_1705.dat', dt)
+    records = np.fromfile('datasetfarfield/dataset_pop_130918_1646.dat', dt)
     data = np.concatenate(records.tolist(), axis=0)
     print(data.shape)
 
-    mapping = np.genfromtxt('mapping.csv', delimiter=',', dtype=np.int16)
+    mapping = np.genfromtxt('mapping_new.csv', delimiter=',', dtype=np.int16)
     mapping = np.subtract(mapping, 1)  # matlab index is devil
     data = data[:, mapping]
 
@@ -151,35 +153,13 @@ def read_dataset(folder=None):
         .reshape((data.shape[0], 32, 16))
     print(antennas.shape)
 
-    dt = np.dtype([('field', 'float32', (171,))])
-    field_records = np.fromfile('dataset_FF_090718_1705.dat', dt)
+    dt = np.dtype([('field', '<f4', (153,))])
+    field_records = np.fromfile('datasetfarfield/dataset_FF_130918_1646.dat', dt)
     print(field_records.shape)
     field = np.concatenate(field_records.tolist(), axis=0)
     print(field.shape)
 
     return antennas, field
-
-
-def plot_field(field):
-    import matplotlib.pyplot as plt
-    import mpl_toolkits.mplot3d.axes3d as axes3d
-
-    Phi = np.radians(np.linspace(-90, 90, 19))
-    Theta = np.radians(np.linspace(1, 90, 9))
-    THETA, PHI = np.meshgrid(Phi, Theta)
-
-    R = field.reshape((len(Theta), len(Phi)))
-
-    X = R * np.sin(PHI) * np.cos(THETA)
-    Y = R * np.sin(PHI) * np.sin(THETA)
-    Z = R * np.cos(PHI)
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, projection='3d')
-    plot = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=plt.get_cmap('coolwarm'),  # or jet
-        linewidth=0.1, antialiased=False, alpha=0.5)
-
-    #plt.savefig('field.png', bbox_inches="tight", dpi=300)
-    plt.show()
 
 
 def training(antennas, fitness):
@@ -192,12 +172,11 @@ def training(antennas, fitness):
     dataloader_val = DataLoader(dataset_val, batch_size=32, num_workers=0)
 
     #model = DeepField().to(device)
-    model = DeepResField(Block, [1, 1]).to(device)
+    model = DeepResField(Block, [1, 1, 1]).to(device)
     print(model)
-    #writer.add_graph(model, )
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.00005, weight_decay=0.5)
-    # scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.1)
+    optimizer = optim.Adam(model.parameters(), lr=0.00001, weight_decay=0.2)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5)
 
     for epoch in range(50):
         print("Epoch: %d" % (epoch+1))
@@ -218,7 +197,7 @@ def training(antennas, fitness):
             optimizer.step()
 
         print('Training epoch {}, loss {}'.format(epoch, loss_train/count))
-        writer.add_scalar('Train/Loss', loss_train/count, epoch)
+        writer.add_scalar('DeepResTrain/Loss', loss_train/count, epoch)
 
         # EVALUATION
         loss_eval = 0.0; count = 0
@@ -233,8 +212,9 @@ def training(antennas, fitness):
             loss_eval += loss.item()
             count += len(antennas)
 
+        scheduler.step(loss_eval/count)
         print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
-        writer.add_scalar('Val/Loss', loss_eval/count, epoch)
+        writer.add_scalar('DeepResVal/Loss', loss_eval/count, epoch)
 
     writer.close()
 
@@ -244,7 +224,7 @@ if __name__ == '__main__':
 
     antennas, fields = read_dataset()
 
-    #plot_field(fields[0])
-    test.draw_antenna(antennas[0], 'first_antenna_correct4.jpg')
+    #test.plot_field(fields[0])
+    #test.draw_antenna(antennas[0], 'first_antenna_correct7.jpg')
 
     training(antennas, fields)

@@ -17,6 +17,28 @@ def draw_antenna(mat, name):
     cv2.waitKey(0)
 
 
+def plot_field(field):
+    import matplotlib.pyplot as plt
+    import mpl_toolkits.mplot3d.axes3d as axes3d
+
+    Phi = np.radians(np.linspace(-90, 90, 19))
+    Theta = np.radians(np.linspace(1, 90, 9))
+    THETA, PHI = np.meshgrid(Phi, Theta)
+
+    R = field.reshape((len(Theta), len(Phi)))
+
+    X = R * np.sin(PHI) * np.cos(THETA)
+    Y = R * np.sin(PHI) * np.sin(THETA)
+    Z = R * np.cos(PHI)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    plot = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=plt.get_cmap('coolwarm'),  # or jet
+        linewidth=0.1, antialiased=False, alpha=0.5)
+
+    #plt.savefig('field.png', bbox_inches="tight", dpi=300)
+    plt.show()
+
+
 def fill_antenna_center():
     ant = np.zeros(504, dtype='uint8')
     antenna = np.insert(ant, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1 , 1, 1, 1, 1, 1])
