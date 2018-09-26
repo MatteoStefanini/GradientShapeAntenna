@@ -141,8 +141,11 @@ class DeepResField(nn.Module):
 
 def read_dataset(folder=None):
     dt = np.dtype([('combination', 'uint8', (504,))])
-    records = np.fromfile('datasetfarfield/dataset_pop_130918_1646.dat', dt)
-    data = np.concatenate(records.tolist(), axis=0)
+    records1 = np.fromfile('datasetfarfield/dataset_pop_130918_1646.dat', dt)
+    records2 = np.fromfile('datasetfarfield/dataset_pop_260918_0054.dat', dt)
+    tmp1 = np.concatenate(records1.tolist(), axis=0)
+    tmp2 = np.concatenate(records2.tolist(), axis=0)
+    data = np.concatenate((tmp1, tmp2), axis=0)
     print(data.shape)
 
     mapping = np.genfromtxt('mapping_new.csv', delimiter=',', dtype=np.int16)
@@ -154,12 +157,14 @@ def read_dataset(folder=None):
     print(antennas.shape)
 
     dt = np.dtype([('field', '<f4', (153,))])
-    field_records = np.fromfile('datasetfarfield/dataset_FF_130918_1646.dat', dt)
-    print(field_records.shape)
-    field = np.concatenate(field_records.tolist(), axis=0)
+    field_records1 = np.fromfile('datasetfarfield/dataset_FF_130918_1646.dat', dt)
+    field_records2 = np.fromfile('datasetfarfield/dataset_FF_260918_0054.dat', dt)
+    ftmp1 = np.concatenate(field_records1.tolist(), axis=0)
+    ftmp2 = np.concatenate(field_records2.tolist(), axis=0)
+    field = np.concatenate((ftmp1, ftmp2), axis=0)
     print(field.shape)
 
-    return antennas, field
+    return antennas, field[]
 
 
 def training(antennas, field):
@@ -167,19 +172,19 @@ def training(antennas, field):
 
     data_train, data_val, fit_train, fit_val = train_test_split(antennas, field, test_size=0.20, random_state=7)
     dataset_train = Antennas(data_train, fit_train)
-    dataloader_train = DataLoader(dataset_train, batch_size=32, num_workers=0)
+    dataloader_train = DataLoader(dataset_train, batch_size=128, num_workers=0)
     dataset_val = Antennas(data_val, fit_val)
-    dataloader_val = DataLoader(dataset_val, batch_size=32, num_workers=0)
+    dataloader_val = DataLoader(dataset_val, batch_size=128, num_workers=0)
 
     #model = DeepField().to(device)
     model = DeepResField(Block, [2, 3, 1]).to(device)
     print(model)
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.000015, weight_decay=0.3)
+    criterion = nn.MSELoss(size_average=True)
+    optimizer = optim.Adam(model.parameters(), lr=0.000013, weight_decay=0.38)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5)
     schedulerStep = optim.lr_scheduler.StepLR(optimizer, step_size=18, gamma=0.5)
 
-    for epoch in range(50):
+    for epoch in range(40):
         schedulerStep.step()
         print("Epoch: %d" % epoch)
         loss_train = 0.0; count = 0
@@ -192,9 +197,10 @@ def training(antennas, field):
             output = model(antennas)
             loss = criterion(output, field)
             loss_train += loss.item()
-            count += len(antennas)
+            #count += len(antennas)
+            count += 1
 
-            if epoch == 0 and count < 150:
+            if epoch == 0 and count < 3:
                 print('first_loss_train: ', loss.item())
 
             optimizer.zero_grad()
@@ -215,7 +221,8 @@ def training(antennas, field):
             output = model(antennas)
             loss = criterion(output, field)
             loss_eval += loss.item()
-            count += len(antennas)
+            #count += len(antennas)
+            count += 1
 
         scheduler.step(loss_eval/count)
         print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
