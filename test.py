@@ -3,6 +3,8 @@ import pandas as pd
 import torch
 import cv2
 import torch.nn as nn
+import torch.optim as optim
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def draw_antenna(mat, name):
@@ -114,6 +116,31 @@ def read_field_dataset():
     return data
 
 
+def test_style_transfer():
+    input = torch.Tensor([2, 2, 2, 2, 2]).to(device)
+    input.requires_grad_()
+    model = nn.Linear(5, 1, bias=False).to(device)
+    print(model)
+    criterion = nn.MSELoss(size_average=True)
+    optimizer = optim.Adam([input], lr=0.001, weight_decay=0.0001)
+    target = torch.Tensor([20]).to(device)
+    model.train()
+
+    for epoch in range(50000):
+
+        output = model(input)
+        loss = criterion(output, target)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        if epoch % 1000 == 0:
+            print("Epoch: {}, loss: {}, input: {}".format(epoch, loss.item(), input))
+
+    print("final input: {}".format(input))
+
+
 if __name__ == '__main__':
 
     ''' # First tried dataset one file
@@ -130,4 +157,6 @@ if __name__ == '__main__':
     # antennas, fitness = read_dataset_onefitness()
 
     # antennas = read_antenna_dataset()
-    field = read_field_dataset()
+    # field = read_field_dataset()
+
+    test_style_transfer()

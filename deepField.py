@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.nn import functional as F
 import numpy as np
-import os, math, test
+import os, math, test, time
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from tensorboardX import SummaryWriter
@@ -149,7 +149,7 @@ def read_dataset(folder=None):
     print(data.shape)
 
     mapping = np.genfromtxt('mapping_new.csv', delimiter=',', dtype=np.int16)
-    mapping = np.subtract(mapping, 1)  # matlab index is devil
+    mapping = np.subtract(mapping, 1)  # matlab index is evil
     data = data[:, mapping]
 
     antennas = np.insert(data, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1, 1, 1, 1, 1, 1], axis=1) \
@@ -164,7 +164,7 @@ def read_dataset(folder=None):
     field = np.concatenate((ftmp1, ftmp2), axis=0)
     print(field.shape)
 
-    return antennas, field[]
+    return antennas, field
 
 
 def training(antennas, field):
@@ -197,8 +197,7 @@ def training(antennas, field):
             output = model(antennas)
             loss = criterion(output, field)
             loss_train += loss.item()
-            #count += len(antennas)
-            count += 1
+            count += 1  # count += len(antennas)
 
             if epoch == 0 and count < 3:
                 print('first_loss_train: ', loss.item())
@@ -214,19 +213,19 @@ def training(antennas, field):
         loss_eval = 0.0; count = 0
         model.eval()
         dataloader_val_iter = iter(dataloader_val)
-        for it, (antennas, field) in enumerate(dataloader_val_iter):
-            antennas = antennas.float().to(device)
-            field = field.to(device)
+        with torch.no_grad():
+            for it, (antennas, field) in enumerate(dataloader_val_iter):
+                antennas = antennas.float().to(device)
+                field = field.to(device)
 
-            output = model(antennas)
-            loss = criterion(output, field)
-            loss_eval += loss.item()
-            #count += len(antennas)
-            count += 1
+                output = model(antennas)
+                loss = criterion(output, field)
+                loss_eval += loss.item()
+                count += 1  # count += len(antennas)
 
-        scheduler.step(loss_eval/count)
-        print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
-        writer.add_scalar('DeepResVal/Loss', loss_eval/count, epoch)
+            scheduler.step(loss_eval/count)
+            print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
+            writer.add_scalar('DeepResVal/Loss', loss_eval/count, epoch)
 
     writer.close()
 
