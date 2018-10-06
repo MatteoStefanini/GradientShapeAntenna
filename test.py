@@ -135,6 +135,8 @@ def test_input_opt():
         loss.backward()
         optimizer.step()
 
+        # input.data.clamp_(0, 1)  # correct the values of updated input image
+
         if epoch % 1000 == 0:
             print("Epoch: {}, loss: {}, input: {}".format(epoch, loss.item(), input))
 
