@@ -116,7 +116,7 @@ def read_field_dataset():
     return data
 
 
-def test_style_transfer():
+def test_input_opt():
     input = torch.Tensor([2, 2, 2, 2, 2]).to(device)
     input.requires_grad_()
     model = nn.Linear(5, 1, bias=False).to(device)
@@ -159,4 +159,4 @@ if __name__ == '__main__':
     # antennas = read_antenna_dataset()
     # field = read_field_dataset()
 
-    test_style_transfer()
+    test_input_opt()
