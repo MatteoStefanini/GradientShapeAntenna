@@ -116,6 +116,10 @@ def read_field_dataset():
     return data
 
 
+def count_parameters(model):
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+
 def test_input_opt():
     input = torch.Tensor([2, 2, 2, 2, 2]).to(device)
     input.requires_grad_()
