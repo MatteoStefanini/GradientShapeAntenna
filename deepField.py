@@ -263,8 +263,9 @@ def shapeOptimizer(input_antenna, numsteps=10000):
     # input_antenna = random
     input_antenna = input_antenna.float().to(device)
 
+    # checkpoint = torch.load('checkpoint.pt.tar')
     model = DeepResField(Block, [2, 3, 1]).to(device)
-    #model.load_state_dict(torch.load('deepField.pt'))
+    # model.load_state_dict(checkpoint['state_dict'])
     model.eval()
     for param in model.parameters():
         param.requires_grad = False
