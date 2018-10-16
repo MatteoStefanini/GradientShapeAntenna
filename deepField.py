@@ -167,7 +167,7 @@ def read_dataset(folder=None):
     return antennas, field
 
 
-def training(antennas, field):
+def training(antennas, field, save=False):
     writer = SummaryWriter()
 
     data_train, data_val, fit_train, fit_val = train_test_split(antennas, field, test_size=0.20, random_state=7)
@@ -179,6 +179,7 @@ def training(antennas, field):
     #model = DeepField().to(device)
     model = DeepResField(Block, [2, 3, 1]).to(device)
     print(model)
+    print('learnable parameters: {}'.format(test.count_parameters(model)))
     criterion = nn.MSELoss(size_average=True)
     optimizer = optim.Adam(model.parameters(), lr=0.000013, weight_decay=0.38)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5)
@@ -210,7 +211,7 @@ def training(antennas, field):
         writer.add_scalar('DeepResTrain/Loss', loss_train/count, epoch)
 
         # EVALUATION
-        loss_eval = 0.0; count = 0
+        loss_eval = 0.0; count = 0; best_loss = 9999
         model.eval()
         dataloader_val_iter = iter(dataloader_val)
         with torch.no_grad():
@@ -226,6 +227,16 @@ def training(antennas, field):
             scheduler.step(loss_eval/count)
             print('Evaluation epoch {}, loss {}'.format(epoch, loss_eval/count))
             writer.add_scalar('DeepResVal/Loss', loss_eval/count, epoch)
+
+            if loss_eval/count < best_loss:
+                best_loss = loss_eval/count
+                if save:
+                    torch.save({
+                        'epoch': epoch + 1,
+                        'state_dict': model.state_dict(),
+                        'best_loss': best_loss,
+                        'optimizer': optimizer.state_dict(),
+                    }, 'checkpoint.pt.tar')
 
     writer.close()
 
