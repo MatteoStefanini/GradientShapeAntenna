@@ -120,6 +120,22 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
+def bestAntennas(antennas, field):
+    best = list()
+    bff = list()
+    bff.append(0)
+    for i, ff in enumerate(field):
+        if ff[0] > 30:
+            best.append(i)
+            if ff[0] > bff[0]:
+                bff = ff
+            if len(best) > 128:
+                break
+    #for f in bff:
+        #print(f, end=',')
+    return torch.from_numpy(antennas[best])
+
+
 def test_input_opt():
     input = torch.Tensor([2, 2, 2, 2, 2]).to(device)
     input.requires_grad_()
