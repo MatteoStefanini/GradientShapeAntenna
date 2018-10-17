@@ -161,10 +161,42 @@ def read_dataset(folder=None):
     field_records2 = np.fromfile('datasetfarfield/dataset_FF_260918_0054.dat', dt)
     ftmp1 = np.concatenate(field_records1.tolist(), axis=0)
     ftmp2 = np.concatenate(field_records2.tolist(), axis=0)
-    field = np.concatenate((ftmp1, ftmp2), axis=0)
-    print(field.shape)
+    fields = np.concatenate((ftmp1, ftmp2), axis=0)
+    print(fields.shape)
 
-    return antennas, field
+    return antennas, fields
+
+
+def read_datasets(folder=None):
+    pops = list()
+    popfiles = [f for f in os.listdir('populations/') if os.path.isfile(os.path.join('populations/', f))]
+    dt = np.dtype([('combination', 'uint8', (504,))])
+    for pop in popfiles:
+        records = np.fromfile(os.path.join('populations/', pop), dt)
+        tmp = np.concatenate(records.tolist(), axis=0)
+        pops.append(tmp)
+    data = np.concatenate(pops, axis=0)
+    print(data.shape)
+
+    mapping = np.genfromtxt('mapping_new.csv', delimiter=',', dtype=np.int16)
+    mapping = np.subtract(mapping, 1)  # matlab index is evil
+    data = data[:, mapping]
+
+    antennas = np.insert(data, [224, 224, 238, 238, 252, 252, 266, 266], [1, 1, 1, 1, 1, 1, 1, 1], axis=1) \
+        .reshape((data.shape[0], 32, 16))
+    print(antennas.shape)
+
+    ffs = list()
+    fffiles = [f for f in os.listdir('farfields/') if os.path.isfile(os.path.join('farfields/', f))]
+    dt = np.dtype([('field', '<f4', (153,))])
+    for ff in fffiles:
+        field_records = np.fromfile(os.path.join('farfields/', ff), dt)
+        ftmp = np.concatenate(field_records.tolist(), axis=0)
+        ffs.append(ftmp)
+    fields = np.concatenate(ffs, axis=0)
+    print(fields.shape)
+
+    return antennas, fields
 
 
 def training(antennas, field, save=False):
@@ -283,6 +315,7 @@ def shapeOptimizer(input_antenna, numsteps=10000, load=False, model=None):
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     antennas, fields = read_dataset()
+    a, f = read_datasets()
 
     #test.plot_field(fields[0])
     #test.draw_antenna(antennas[0], 'first_antenna_correct7.jpg')
