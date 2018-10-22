@@ -310,7 +310,7 @@ def shapeOptimizer(input_antenna, numsteps=10000, load=False, model=None):
     final_antenna = torch.where(input_antenna >= torch.Tensor([0.5]).to(device), torch.Tensor([1]).to(device),
                                 torch.Tensor([0]).to(device))
     print(final_antenna)
-    test.draw_antenna(final_antenna[0], 'final_antenna1.jpg')
+    test.draw_antenna(final_antenna[0].numpy(), 'final_antenna1.jpg')
     torch.save(final_antenna, 'final_antenna.pt')
 
 
