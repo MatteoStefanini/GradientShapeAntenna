@@ -215,9 +215,9 @@ def training(antennas, field, save=False):
     criterion = nn.MSELoss(size_average=True)
     optimizer = optim.Adam(model.parameters(), lr=0.000013, weight_decay=0.38)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5)
-    schedulerStep = optim.lr_scheduler.StepLR(optimizer, step_size=18, gamma=0.5)
+    schedulerStep = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
-    for epoch in range(40):
+    for epoch in range(18):
         schedulerStep.step()
         print("Epoch: %d" % epoch)
         loss_train = 0.0; count = 0
@@ -275,9 +275,10 @@ def training(antennas, field, save=False):
 
 
 def shapeOptimizer(input_antenna, numsteps=10000, load=False, model=None):
-    target = torch.Tensor([60,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,16.979443,16.390831,14.699802,12.192764,9.399569,6.9013877,5.045834,3.8627558,3.2152474,2.9814982,3.1461353,3.8298466,5.2948112,7.8841605,11.79757,16.742212,21.767256,25.545385,26.94979,6.4181437,6.523895,6.498592,5.8930774,4.950045,4.247282,3.8436182,3.4621933,3.0293825,2.5091858,1.7981352,1.0051274,0.4590171,0.66554624,2.3632925,5.8081045,9.983548,13.243057,14.445404,1.3993635,1.8733073,2.7961833,3.3903077,3.7685337,4.2237897,4.0460405,3.223515,2.865524,2.9499974,2.5312657,1.6206126,0.8758494,0.29405886,0.291434,1.5794089,3.3652325,4.543933,4.9136353,0.102788955,0.32015356,0.7961047,1.2725159,2.0362575,2.9387867,2.351526,0.94538224,0.7399693,1.2234489,1.239646,0.75646865,0.74405736,0.61022913,0.11292463,0.43044522,0.9508854,1.1471696,1.2036313,0.09539703,0.12557153,0.12608986,0.2644683,0.989888,1.9665514,1.2226223,0.14903641,0.3315221,0.33420357,0.33557105,0.18458776,0.60817224,0.7911495,0.095224656,0.11555943,0.23373608,0.25539184,0.26249105,0.10886455,0.18110645,0.07076928,0.06448294,0.62088424,1.4325254,0.6867487,0.17095229,0.7717876,0.22641554,0.09411606,0.05425589,0.5217974,0.7917129,0.0973483,0.11973389,0.12372471,0.1419548,0.061164614,0.05867293,0.20375477,0.11511716,0.114179164,0.5441823,1.1969062,0.5634693,0.23218735,0.9627118,0.2781146,0.112248875,0.12875688,0.5358263,0.69452596,0.06869823,0.21517006,0.20080702,0.22302145,0.05867293]).to(device)
+    target = torch.Tensor([60,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01]).to(device)
     target = target.expand(input_antenna.size(0), 153)
     # input_antenna = random
+    test.draw_antenna(input_antenna[0].numpy(), 'input_antenna1.jpg')
     input_antenna = input_antenna.float().to(device)
 
     if model is None:
@@ -309,20 +310,20 @@ def shapeOptimizer(input_antenna, numsteps=10000, load=False, model=None):
     final_antenna = torch.where(input_antenna >= torch.Tensor([0.5]).to(device), torch.Tensor([1]).to(device),
                                 torch.Tensor([0]).to(device))
     print(final_antenna)
+    test.draw_antenna(final_antenna[0], 'final_antenna1.jpg')
     torch.save(final_antenna, 'final_antenna.pt')
 
 
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    antennas, fields = read_dataset()
-    a, f = read_datasets()
+    #antennas, fields = read_dataset()
+    antennas, fields = read_datasets()
 
+    best = test.bestAntennas(antennas, fields)
     #test.plot_field(fields[0])
     #test.draw_antenna(antennas[0], 'first_antenna_correct7.jpg')
     #test.randomness(fields)
 
-    best = test.bestAntennas(antennas, fields)
+    #model = training(antennas, fields)
 
-    model = training(antennas, fields)
-
-    shapeOptimizer(best, model=model)
+    shapeOptimizer(best)#, model=model)

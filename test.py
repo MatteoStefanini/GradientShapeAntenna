@@ -125,7 +125,7 @@ def bestAntennas(antennas, field):
     bff = list()
     bff.append(0)
     for i, ff in enumerate(field):
-        if ff[0] > 30:
+        if ff[0] > 20:
             best.append(i)
             if ff[0] > bff[0]:
                 bff = ff
