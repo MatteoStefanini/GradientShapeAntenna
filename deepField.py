@@ -141,11 +141,13 @@ class DeepResField(nn.Module):
 
 def read_dataset(folder=None):
     dt = np.dtype([('combination', 'uint8', (504,))])
-    records1 = np.fromfile('datasetfarfield/dataset_pop_130918_1646.dat', dt)
-    records2 = np.fromfile('datasetfarfield/dataset_pop_260918_0054.dat', dt)
-    tmp1 = np.concatenate(records1.tolist(), axis=0)
-    tmp2 = np.concatenate(records2.tolist(), axis=0)
-    data = np.concatenate((tmp1, tmp2), axis=0)
+    #records1 = np.fromfile('datasetfarfield/dataset_pop_130918_1646.dat', dt)
+    #records2 = np.fromfile('datasetfarfield/dataset_pop_260918_0054.dat', dt)
+    records1 = np.fromfile('dataset_pop_151018_1624.dat', dt)
+    #records2 = np.fromfile('dataset_pop_151018_1628.dat', dt)
+    data = np.concatenate(records1.tolist(), axis=0)
+    #tmp2 = np.concatenate(records2.tolist(), axis=0)
+    #data = np.concatenate((tmp1, tmp2), axis=0)
     print(data.shape)
 
     mapping = np.genfromtxt('mapping_new.csv', delimiter=',', dtype=np.int16)
@@ -157,12 +159,15 @@ def read_dataset(folder=None):
     print(antennas.shape)
 
     dt = np.dtype([('field', '<f4', (153,))])
-    field_records1 = np.fromfile('datasetfarfield/dataset_FF_130918_1646.dat', dt)
-    field_records2 = np.fromfile('datasetfarfield/dataset_FF_260918_0054.dat', dt)
+    #field_records1 = np.fromfile('datasetfarfield/dataset_FF_130918_1646.dat', dt)
+    #field_records2 = np.fromfile('datasetfarfield/dataset_FF_260918_0054.dat', dt)
+    field_records1 = np.fromfile('dataset_FF_151018_1624.dat', dt)
+    #field_records2 = np.fromfile('dataset_FF_151018_1628.dat', dt)
     ftmp1 = np.concatenate(field_records1.tolist(), axis=0)
-    ftmp2 = np.concatenate(field_records2.tolist(), axis=0)
-    fields = np.concatenate((ftmp1, ftmp2), axis=0)
-    print(fields.shape)
+    print(ftmp1.shape)
+    #ftmp2 = np.concatenate(field_records2.tolist(), axis=0)
+    #fields = np.concatenate((ftmp1, ftmp2), axis=0)
+    #print(fields.shape)
 
     return antennas, fields
 
@@ -317,7 +322,7 @@ def shapeOptimizer(input_antenna, numsteps=10000, load=False, model=None):
 if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #antennas, fields = read_dataset()
-    antennas, fields = read_datasets()
+    antennas, fields = read_dataset()
 
     best = test.bestAntennas(antennas, fields)
     #test.plot_field(fields[0])
